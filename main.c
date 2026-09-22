@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include "FileWatcher.h"
 
-void main() {
-	printf("Hello, World!\n");
+
+
+int main(void) {
+
 }
 

@@ -2,33 +2,47 @@
 #include <stdio.h>
 #include <windows.h>
 #include <time.h>
+#include <stdbool.h>
 
 CONST int TIMEOUT_LENGTH = 300;
 
-typedef struct {
-	FILE* dir;
-	FileWatcher watch;
-} WindowsFilesWatcher;
+int update(FileWatcher *watcher) {
 
-void _update(WindowsFilesWatcher *watcher) {
-
-	HANDLE changeHandle = FindFirstChangeNotification(
-		watcher->dir,
-		FALSE,
-		FILE_NOTIFY_CHANGE_LAST_WRITE
+	char* dir;
+	char buffer[1024];
+	DWORD bytesReturned;
+	
+	HANDLE initHandle = ReadDirectoryChangesW(
+		dir,
+		buffer,
+        sizeof(buffer),
+        TRUE, // Watch subtree
+        FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE,
+        &bytesReturned,
+        NULL,
+        NULL
 	);
 
-	DWORD waitStatus = WaitForSingleObject(changeHandle, INFINITE);
-	int timeSinceChange;
-	int elapsedTime = 0;
+	time_t timeSinceChange;
+	time_t elapsedTime;
 	time(&timeSinceChange);
+	time(&elapsedTime);
 	
 	while (timeSinceChange - elapsedTime < TIMEOUT_LENGTH) {
 
-		if (waitStatus == WAIT_OBJECT_0) {
+		if (initHandle == WAIT_OBJECT_0) {
 			time(&timeSinceChange);
 			elapsedTime = 0;
 		}
 
+		time(&elapsedTime);
 	}
+}
+
+bool isValidPath(HANDLE handle) {
+	if (handle != INVALID_HANDLE_VALUE) {
+		return true;
+	}
+
+	return false;
 }
